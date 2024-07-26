@@ -3,8 +3,8 @@ const cors = require("cors");
 const app = express();
 const dotenv = require(`dotenv`);
 const db = require("./configs/db.config");
-const userRoutes = require("./routes/user.routes");
-const roleRoutes = require("./routes/role.routes");
+const userRoutes = require("./src/routes/user.routes");
+const roleRoutes = require("./src/routes/role.routes");
 
 dotenv.config();
 

@@ -41,3 +41,5 @@ sequelize
   .sync({ force: false })
   .then(() => console.log(`Synced successfully with database!`))
   .catch((error) => console.log(`Failed to sync with database!`));
+
+module.exports = db;

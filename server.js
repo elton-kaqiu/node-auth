@@ -13,14 +13,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
 // Use the user routes
-app.use("/api/users", userRoutes);
+// app.use("/api/users", userRoutes);
 
 // Use the role routes
-app.use("/api/roles", roleRoutes);
+// app.use("/api/roles", roleRoutes);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`App listening in port:${PORT}  `));

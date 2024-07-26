@@ -1,21 +1,28 @@
-// const express = require("express");
-// const router = express.Router();
-// const roleController = require("../controllers/role.controller");
-// const authMiddleware = require("../middlewares/auth.middleware"); // If you have authentication middleware
+const express = require("express");
+const router = express.Router();
+const {
+  createRole,
+  getAllRoles,
+  getRoleById,
+  updateRole,
+  deleteRole,
+} = require("../controllers/role.controller");
+const authMiddleware = require("../middlewares/auth.middleware");
+const {
+  createRoleValidator,
+  updateRoleValidator,
+  getRoleByIdValidator,
+  deleteRoleByIdValidator,
+} = require("../validators/role.validator");
 
-// // Create a new Role
-// router.post("/", authMiddleware, roleController.createRole);
+router.post("/", authMiddleware, createRoleValidator, createRole);
 
-// // Retrieve all Roles
-// router.get("/", authMiddleware, roleController.getAllRoles); // Protect with authMiddleware if needed
+router.get("/", authMiddleware, getAllRoles);
 
-// // Retrieve a single Role by ID
-// router.get("/:id", authMiddleware, roleController.getRoleById); // Protect with authMiddleware if needed
+router.get("/:id", authMiddleware, getRoleByIdValidator, getRoleById);
 
-// // Update a Role by ID
-// router.put("/:id", authMiddleware, roleController.updateRole); // Protect with authMiddleware if needed
+router.put("/:id", authMiddleware, updateRoleValidator, updateRole);
 
-// // Delete a Role by ID
-// router.delete("/:id", authMiddleware, roleController.deleteRole); // Protect with authMiddleware if needed
+router.delete("/:id", authMiddleware, deleteRoleByIdValidator, deleteRole);
 
-// module.exports = router;
+module.exports = router;

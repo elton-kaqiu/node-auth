@@ -1,13 +1,75 @@
-const { User } = require("../configs/db.config");
+const { where } = require("sequelize");
+const { User, Role } = require("../configs/db.config");
+const { hashPassword } = require("../helpers/password.helper");
+const jwt = require("jsonwebtoken");
+const { jwtSecret } = require("../configs/app.config");
 
-// Create and Save a new User
 const createUser = async (req, res, next) => {
   const transaction = await User.sequelize.transaction();
   try {
     const { name, email, password, role_id = 1 } = req.body;
-    
+    const role = await Role.findByPk(role_id);
+    if (!role) {
+      await transaction.rollback();
+      return res
+        .status(404)
+        .json({ message: `Role with id: ${role_id} not found!` });
+    }
+
+    const existingUser = await User.findOne({
+      where: { email },
+      include: Role,
+    });
+    if (existingUser) {
+      await transaction.rollback();
+      return res.status(404).json({
+        message: `User with this email: ${existingUser.email} exists!`,
+      });
+    }
+
+    const hashedPassword = await hashPassword(password);
+
+    const newUser = await User.create(
+      {
+        name,
+        email,
+        password: hashedPassword,
+        role_id,
+      },
+      { transaction }
+    );
+
+    const token = jwt.sign(
+      {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: {
+          id: role.id,
+          name: role.name,
+        },
+      },
+      jwtSecret,
+      { expiresIn: `1h` }
+    );
+    await transaction.commit();
+
+    res.status(201).json({
+      token,
+      user: {
+        id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        role: {
+          id: role.id,
+          name: role.name,
+        },
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
+      },
+    });
   } catch (error) {
-    await transaction.rollBack();
+    await transaction.rollback();
     res
       .status(500)
       .json({ message: `Something went wrong while registering the user!` });

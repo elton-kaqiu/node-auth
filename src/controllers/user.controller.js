@@ -8,7 +8,7 @@ const { name } = require("ejs");
 const createUser = async (req, res, next) => {
   const transaction = await User.sequelize.transaction();
   try {
-    const { name, email, password, role_id = 1 } = req.body;
+    const { name, email, password, role_id = 8 } = req.body;
     const role = await Role.findByPk(role_id);
     if (!role) {
       await transaction.rollback();
@@ -78,7 +78,7 @@ const createUser = async (req, res, next) => {
   }
 };
 
-const getAllUsers = async (res, next) => {
+const getAllUsers = async (req, res, next) => {
   const users = await User.findAll();
   res.status(200).json(users);
   try {

@@ -1,14 +1,13 @@
 const { where } = require("sequelize");
 const { Role } = require("../configs/db.config");
 
-// Create and Save a new Role
 const createRole = async (req, res, next) => {
   const transaction = await Role.sequelize.transaction();
   try {
     const { name } = req.body;
-    const existingRole = Role.findOne({ where: { name } });
+    const existingRole = await Role.findOne({ where: { name } });
     if (existingRole) {
-      await transaction.rollBack();
+      await transaction.rollback();
       return res
         .status(400)
         .json({ message: `Role with name: ${name} already exists!` });
@@ -17,7 +16,7 @@ const createRole = async (req, res, next) => {
     await transaction.commit();
     res.status(201).json(newRole);
   } catch (error) {
-    await transaction.rollBack();
+    await transaction.rollback();
     res
       .status(500)
       .json({ message: `Something went wrong while creating role!` });
@@ -25,7 +24,6 @@ const createRole = async (req, res, next) => {
   }
 };
 
-// Retrieve all Roles
 const getAllRoles = async (req, res, next) => {
   try {
     const roles = await Role.findAll();
@@ -38,13 +36,14 @@ const getAllRoles = async (req, res, next) => {
   }
 };
 
-// Retrieve a single Role by ID
 const getRoleById = async (req, res, next) => {
   try {
     const { id } = req.params;
     const existingRole = await Role.findOne({ where: { id } });
     if (!existingRole) {
-      res.status(404).json({ message: `Role with id:${id} doesn't exist!` });
+      return res
+        .status(404)
+        .json({ message: `Role with id:${id} doesn't exist!` });
     }
     res.status(200).json(existingRole);
   } catch (error) {
@@ -55,7 +54,6 @@ const getRoleById = async (req, res, next) => {
   }
 };
 
-// Update a Role by ID
 const updateRole = async (req, res, next) => {
   const transaction = await Role.sequelize.transaction();
   try {
@@ -63,7 +61,7 @@ const updateRole = async (req, res, next) => {
     const { name } = req.body;
     const existingRole = await Role.findByPk(id);
     if (!existingRole) {
-      await transaction.rollBack();
+      await transaction.rollback();
       return res
         .status(404)
         .json({ message: `Role with id:${id} does not exist!` });
@@ -73,7 +71,7 @@ const updateRole = async (req, res, next) => {
       { transaction }
     );
     if (roleWithName && roleWithName.id !== id) {
-      await transaction.rollBack();
+      await transaction.rollback();
       return res.status(400).json({ message: "Role name already exists" });
     }
 
@@ -82,17 +80,14 @@ const updateRole = async (req, res, next) => {
     await transaction.commit();
     res.status(200).json(existingRole);
   } catch (error) {
-    await transaction.rollBack();
+    await transaction.rollback();
     res
       .status(500)
       .json({ message: `Something went wrong while updating a role!` });
     next(error);
   }
-
-  // Implementation here
 };
 
-// Delete a Role by ID
 const deleteRole = async (req, res, next) => {
   const transaction = await Role.sequelize.transaction();
   try {
@@ -105,7 +100,7 @@ const deleteRole = async (req, res, next) => {
     await existingRole.destroy({ transaction });
 
     await transaction.commit();
-    res.status(204).json({ message: `Role deleted successfully!` });
+    res.status(200).json({ message: `Role deleted successfully!` });
   } catch (error) {
     await transaction.rollback();
     res

@@ -1,7 +1,7 @@
 const { body, param, validationResult } = require("express-validator");
 
 const createUserValidator = [
-  body("username")
+  body("name")
     .isString()
     .withMessage("Username must be a string")
     .notEmpty()
@@ -33,18 +33,6 @@ const createUserValidator = [
 
 const updateUserValidator = [
   param("id").isInt().withMessage("User ID must be an integer"),
-
-  body("username")
-    .optional()
-    .isString()
-    .withMessage("Username must be a string")
-    .notEmpty()
-    .withMessage("Username cannot be empty")
-    .trim()
-    .isLength({ min: 3, max: 30 })
-    .withMessage("Username must be between 3 and 30 characters long"),
-
-  body("email").optional().isEmail().withMessage("Invalid email format"),
 
   body("password")
     .isLength({ min: 6 })

@@ -4,9 +4,9 @@ const {
   createUser,
   getAllUsers,
   getUserById,
-  updateUser,
   deleteUser,
   login,
+  updatePassword,
 } = require("../controllers/user.controller");
 const authMiddleware = require("../middlewares/auth.middleware");
 
@@ -24,7 +24,7 @@ router.get("/", authMiddleware, getAllUsers);
 
 router.get("/:id", authMiddleware, getUserByIdValidator, getUserById);
 
-router.put("/:id", authMiddleware, updateUserValidator, updateUser);
+router.patch("/:id", authMiddleware, updateUserValidator, updatePassword);
 
 router.delete("/:id", authMiddleware, deleteUserByIdValidator, deleteUser);
 

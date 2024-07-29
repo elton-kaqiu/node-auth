@@ -1,8 +1,9 @@
 const { where } = require("sequelize");
 const { User, Role } = require("../configs/db.config");
-const { hashPassword } = require("../helpers/password.helper");
+const { hashPassword, comparePassword } = require("../helpers/password.helper");
 const jwt = require("jsonwebtoken");
 const { jwtSecret } = require("../configs/app.config");
+const { name } = require("ejs");
 
 const createUser = async (req, res, next) => {
   const transaction = await User.sequelize.transaction();
@@ -77,38 +78,137 @@ const createUser = async (req, res, next) => {
   }
 };
 
-// Retrieve all Users
-const getAllUsers = async (req, res, next) => {
-  // Implementation here
+const getAllUsers = async (res, next) => {
+  const users = await User.findAll();
+  res.status(200).json(users);
+  try {
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: `Something went wrong while getting all users!` });
+    next(error);
+  }
 };
 
-// Retrieve a single User by ID
 const getUserById = async (req, res, next) => {
-  // Implementation here
+  try {
+    const { id } = req.params;
+    const existingUser = await User.findByPk(id);
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ message: `User with id: ${id} not found!` });
+    }
+    res.status(200).json(existingUser);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: `Something went wrong while fetching a user!` });
+    next(error);
+  }
 };
 
-// Update a User by ID
-const updateUser = async (req, res, next) => {
+const updatePassword = async (req, res, next) => {
   const transaction = await User.sequelize.transaction();
-  // Implementation here
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    const existingUser = await User.findByPk(id);
+    if (!existingUser) {
+      await transaction.rollback();
+      return res
+        .status(404)
+        .json({ message: `User with id: ${id} doesn't exist!` });
+    }
+    const hashedPassword = await hashPassword(password);
+    existingUser.password = hashedPassword;
+    await existingUser.save({ transaction });
+    await transaction.commit();
+    res.status(200).json({ message: `Password updated succesfully!` });
+  } catch (error) {
+    await transaction.rollback();
+    res
+      .status(500)
+      .json({ message: `Something went wrong while updating the password` });
+    next(error);
+  }
 };
 
-// Delete a User by ID
 const deleteUser = async (req, res, next) => {
   const transaction = await User.sequelize.transaction();
-  // Implementation here
+  try {
+    const { id } = req.params;
+    const existingUser = User.findByPk(id);
+    if (!existingUser) {
+      await transaction.rollback();
+      return res
+        .status(404)
+        .json({ message: `User with id: ${id} not found!` });
+    }
+    await existingUser.destroy({ transaction });
+    await transaction.commit();
+    res.status(204).json({ message: `User deleted successfully!` });
+  } catch (error) {
+    await transaction.rollback();
+    res
+      .status(500)
+      .json({ message: `Something went wrong while deleting a user!` });
+    next(error);
+  }
 };
 
-// Login a User
 const login = async (req, res, next) => {
-  // Implementation here
+  try {
+    const { email, password } = req.body;
+    const existingUser = await User.findOne({
+      where: { email },
+      include: Role,
+    });
+
+    if (!existingUser) {
+      return res
+        .status(404)
+        .json({ error: `User with email ${email} does not exist!` });
+    }
+    const isPasswordMatched = await comparePassword(
+      password,
+      existingUser.password
+    );
+    if (!isPasswordMatched) {
+      return res.status(404).json({ message: `Incorrect password!` });
+    }
+    const token = jwt.sign(
+      {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: existingUser.Role && existingUser.Role.name,
+      },
+      jwtSecret,
+      { expiresIn: `1h` }
+    );
+    res.status(200).json({
+      token,
+      id: existingUser.id,
+      name: existingUser.name,
+      email: existingUser.email,
+      role: existingUser.Role && {
+        id: existingUser.Role.id,
+        name: existingUser.Role.name,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: `Something went wrong while logging in` });
+    next(error);
+  }
 };
 
 module.exports = {
   createUser,
   getAllUsers,
   getUserById,
-  updateUser,
+  updatePassword,
   deleteUser,
   login,
 };

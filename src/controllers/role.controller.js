@@ -5,14 +5,15 @@ const createRole = async (req, res, next) => {
   const transaction = await Role.sequelize.transaction();
   try {
     const { name } = req.body;
-    const existingRole = await Role.findOne({ where: { name } });
+    const roleName = name;
+    const existingRole = await Role.findOne({ where: { roleName } });
     if (existingRole) {
       await transaction.rollback();
       return res
         .status(400)
-        .json({ message: `Role with name: ${name} already exists!` });
+        .json({ message: `Role with name: ${roleName} already exists!` });
     }
-    const newRole = await Role.create({ name }, { transaction });
+    const newRole = await Role.create({ roleName }, { transaction });
     await transaction.commit();
     res.status(201).json(newRole);
   } catch (error) {
@@ -59,6 +60,7 @@ const updateRole = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
+    const roleName = name;
     const existingRole = await Role.findByPk(id);
     if (!existingRole) {
       await transaction.rollback();
@@ -67,7 +69,7 @@ const updateRole = async (req, res, next) => {
         .json({ message: `Role with id:${id} does not exist!` });
     }
     const roleWithName = await Role.findOne(
-      { where: { name } },
+      { where: { roleName } },
       { transaction }
     );
     if (roleWithName && roleWithName.id !== id) {
@@ -75,7 +77,7 @@ const updateRole = async (req, res, next) => {
       return res.status(400).json({ message: "Role name already exists" });
     }
 
-    existingRole.name = name;
+    existingRole.name = roleName;
     await existingRole.save({ transaction });
     await transaction.commit();
     res.status(200).json(existingRole);
